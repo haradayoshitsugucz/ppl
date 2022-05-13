@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"github.com/haradayoshitsugucz/purple-server/api/domain/model"
+	"github.com/haradayoshitsugucz/purple-server/domain/model"
 )
 
 type Product struct {

@@ -3,7 +3,7 @@ package dao
 import (
 	"errors"
 
-	"github.com/haradayoshitsugucz/purple-server/domain/entity"
+	"github.com/haradayoshitsugucz/purple-server/domain/model"
 	"github.com/haradayoshitsugucz/purple-server/domain/repository"
 	"gorm.io/gorm"
 )
@@ -20,35 +20,50 @@ func NewBrandRepository(cluster *DBCluster) repository.BrandRepository {
 	}
 }
 
-func (db *BrandDao) FindByID(brandID int64) (*entity.Brand, error) {
+func (db *BrandDao) FindByID(brandID int64) (*model.Brand, error) {
 
-	brand := &entity.Brand{}
-	res := db.reader.Where("id = ?", brandID).First(brand)
+	entity := &Brand{}
+	res := db.reader.Where("id = ?", brandID).First(entity)
 
 	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
-		return entity.EmptyBrand(), nil
+		return model.EmptyBrand(), nil
 	}
 
 	if err := res.Error; err != nil {
 		return nil, err
+	}
+
+	brand := &model.Brand{
+		ID:   entity.ID,
+		Name: entity.Name,
 	}
 
 	return brand, nil
 }
 
-func (db *BrandDao) ListByIDs(brandIDs []int64, limit int) ([]*entity.Brand, error) {
+func (db *BrandDao) ListByIDs(brandIDs []int64, limit int) ([]*model.Brand, error) {
+
 	if len(brandIDs) == 0 {
-		return []*entity.Brand{}, nil
+		return []*model.Brand{}, nil
 	}
 
-	var brands []*entity.Brand
+	var entities []*Brand
 	res := db.reader.
 		Where("id in(?)", brandIDs).
-		Find(&brands).
+		Find(&entities).
 		Limit(limit)
 
 	if err := res.Error; err != nil {
 		return nil, err
+	}
+
+	brands := make([]*model.Brand, 0, len(entities))
+	for _, e := range entities {
+		b := &model.Brand{
+			ID:   e.ID,
+			Name: e.Name,
+		}
+		brands = append(brands, b)
 	}
 
 	return brands, nil

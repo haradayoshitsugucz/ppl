@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/haradayoshitsugucz/purple-server/domain/entity"
+	"github.com/haradayoshitsugucz/purple-server/domain/model"
 	"github.com/haradayoshitsugucz/purple-server/domain/repository"
 	"github.com/haradayoshitsugucz/purple-server/logger"
 	"gorm.io/gorm"
@@ -23,34 +23,50 @@ func NewProductRepository(cluster *DBCluster) repository.ProductRepository {
 	}
 }
 
-func (db *ProductDao) FindByID(productID int64) (*entity.Product, error) {
+func (db *ProductDao) FindByID(productID int64) (*model.Product, error) {
 
-	product := &entity.Product{}
-	res := db.reader.Where("id = ?", productID).First(product)
+	entity := &Product{}
+	res := db.reader.Where("id = ?", productID).First(entity)
 
 	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
-		return entity.EmptyProduct(), nil
+		return model.EmptyProduct(), nil
 	}
 
 	if err := res.Error; err != nil {
 		return nil, err
+	}
+
+	product := &model.Product{
+		ID:      entity.ID,
+		Name:    entity.Name,
+		BrandID: entity.BrandID,
 	}
 
 	return product, nil
 }
 
-func (db *ProductDao) ListByName(name string, offset, limit int) ([]*entity.Product, error) {
+func (db *ProductDao) ListByName(name string, offset, limit int) ([]*model.Product, error) {
 
-	var products []*entity.Product
+	var entities []*Product
 
 	res := db.reader.
 		Where("name like ?", fmt.Sprintf("%%%s%%", name)).
 		Offset(offset).Limit(limit).
 		Order("id DESC").
-		Find(&products)
+		Find(&entities)
 
 	if err := res.Error; err != nil {
 		return nil, err
+	}
+
+	products := make([]*model.Product, 0, len(entities))
+	for _, e := range entities {
+		p := &model.Product{
+			ID:      e.ID,
+			Name:    e.Name,
+			BrandID: e.BrandID,
+		}
+		products = append(products, p)
 	}
 
 	return products, nil
@@ -58,7 +74,7 @@ func (db *ProductDao) ListByName(name string, offset, limit int) ([]*entity.Prod
 
 func (db *ProductDao) CountByName(name string) (count int64, err error) {
 
-	res := db.reader.Model(&entity.Product{}).
+	res := db.reader.Model(&Product{}).
 		Where("name like ?", fmt.Sprintf("%%%s%%", name)).
 		Count(&count)
 
@@ -69,7 +85,7 @@ func (db *ProductDao) CountByName(name string) (count int64, err error) {
 	return count, res.Error
 }
 
-func (db *ProductDao) Insert(product *entity.Product, tx *gorm.DB) (productID int64, err error) {
+func (db *ProductDao) Insert(product *model.Product, tx *gorm.DB) (productID int64, err error) {
 
 	var conn *gorm.DB
 	if tx != nil {
@@ -78,7 +94,12 @@ func (db *ProductDao) Insert(product *entity.Product, tx *gorm.DB) (productID in
 		conn = db.writer
 	}
 
-	res := conn.Model(&entity.Product{}).Create(product)
+	entity := &Product{
+		Name:    product.Name,
+		BrandID: product.BrandID,
+	}
+
+	res := conn.Model(&Product{}).Create(entity)
 	if err := res.Error; err != nil {
 		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
 			if mysqlErr.Number == duplicateEntryErrorCode {
@@ -89,11 +110,11 @@ func (db *ProductDao) Insert(product *entity.Product, tx *gorm.DB) (productID in
 		return 0, err
 	}
 
-	return product.ID, res.Error
+	return entity.ID, res.Error
 }
 
 // Update update
-func (db *ProductDao) Update(product *entity.Product, tx *gorm.DB) (rowsAffected int64, err error) {
+func (db *ProductDao) Update(product *model.Product, tx *gorm.DB) (rowsAffected int64, err error) {
 
 	updatesMap := map[string]interface{}{
 		"id":       product.ID,
@@ -108,7 +129,7 @@ func (db *ProductDao) Update(product *entity.Product, tx *gorm.DB) (rowsAffected
 		conn = db.writer
 	}
 
-	res := conn.Model(&entity.Product{}).Where("id = ?", product.ID).Updates(updatesMap)
+	res := conn.Model(&Product{}).Where("id = ?", product.ID).Updates(updatesMap)
 
 	if res.RowsAffected == 0 {
 		logger.GetLogger().Info("update product rows_affected is 0")
@@ -127,9 +148,10 @@ func (db *ProductDao) DeleteByID(productID int64, tx *gorm.DB) (rowsAffected int
 		conn = db.writer
 	}
 
-	res := conn.Delete(&entity.Product{}, "id = ?", productID)
+	res := conn.Delete(&Product{}, "id = ?", productID)
 	if res.RowsAffected == 0 {
 		logger.GetLogger().Info("delete product rows_affected is 0")
 	}
+
 	return res.RowsAffected, res.Error
 }

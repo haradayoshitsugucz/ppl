@@ -3,7 +3,7 @@ package config
 import (
 	"time"
 
-	"github.com/haradayoshitsugucz/purple-server/domain/entity"
+	"github.com/haradayoshitsugucz/purple-server/domain/model"
 	"go.uber.org/zap/zapcore"
 	gormLogger "gorm.io/gorm/logger"
 )
@@ -44,7 +44,7 @@ type DBSetting struct {
 }
 
 // WithCredentials　secrets manager の値を指定する場合に使用
-func (d *DBSetting) WithCredentials(credentials *entity.DBCredentials) *DBSetting {
+func (d *DBSetting) WithCredentials(credentials *model.DBCredentials) *DBSetting {
 	d.User = credentials.Username
 	d.Password = credentials.Password
 	d.Host = credentials.Host

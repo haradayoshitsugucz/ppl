@@ -1,7 +1,9 @@
 package repository
 
-import "github.com/haradayoshitsugucz/purple-server/domain/entity"
+import (
+	"github.com/haradayoshitsugucz/purple-server/domain/model"
+)
 
 type SecretsRepository interface {
-	GetDBCredentials(secretName string) (*entity.DBCredentials, error)
+	GetDBCredentials(secretName string) (*model.DBCredentials, error)
 }

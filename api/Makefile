@@ -4,7 +4,7 @@ GOBUILD=CGO_ENABLED=0 $(GO_ENV) go build -a -tags netgo -installsuffix netgo --l
 BINARY_NAME=purple-api
 
 # ビルド
-build:
+build: wire_gen tidy
 	$(GOBUILD) -o $(BINARY_NAME) -v
 
 # ローカル環境起動
@@ -29,4 +29,4 @@ test_e2e:
 test_model:
 	go clean -testcache
 	go test -race -v ./presentation/parameter
-	go test -race -v ./domain/model
+	go test -race -v ../domain/model
