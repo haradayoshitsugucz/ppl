@@ -1,0 +1,2 @@
+TRUNCATE `product`;
+TRUNCATE `brand`;
