@@ -2,8 +2,7 @@ package service
 
 import (
 	"github.com/haradayoshitsugucz/purple-server/api/domain/dto"
-	"github.com/haradayoshitsugucz/purple-server/api/domain/model"
-	"github.com/haradayoshitsugucz/purple-server/domain/entity"
+	"github.com/haradayoshitsugucz/purple-server/domain/model"
 	"github.com/haradayoshitsugucz/purple-server/domain/repository"
 )
 
@@ -45,12 +44,6 @@ func (s *ProductServiceImpl) GetProduct(productID int64) (*dto.Product, error) {
 		return &dto.Product{Product: model.EmptyProduct(), Brand: model.EmptyBrand()}, nil
 	}
 
-	productModel := &model.Product{
-		ID:      product.ID,
-		Name:    product.Name,
-		BrandID: product.BrandID,
-	}
-
 	// brand
 	brand, err := s.brandRepo.FindByID(product.BrandID)
 	if err != nil {
@@ -58,18 +51,13 @@ func (s *ProductServiceImpl) GetProduct(productID int64) (*dto.Product, error) {
 	}
 
 	if ok, _ := brand.Empty(); ok {
-		return &dto.Product{Product: productModel, Brand: model.EmptyBrand()}, nil
-	}
-
-	brandModel := &model.Brand{
-		ID:   brand.ID,
-		Name: brand.Name,
+		return &dto.Product{Product: product, Brand: model.EmptyBrand()}, nil
 	}
 
 	// DTO
 	productDTO := &dto.Product{
-		Product: productModel,
-		Brand:   brandModel,
+		Product: product,
+		Brand:   brand,
 	}
 
 	return productDTO, nil
@@ -105,30 +93,20 @@ func (s *ProductServiceImpl) GetProductsByName(name string, offset, limit int) (
 		return nil, 0, err
 	}
 
-	brandMap := make(map[int64]*entity.Brand, len(brands))
+	brandMap := make(map[int64]*model.Brand, len(brands))
 	for _, b := range brands {
 		brandMap[b.ID] = b
 	}
 
 	for _, p := range products {
-
-		productModel := &model.Product{
-			ID:      p.ID,
-			Name:    p.Name,
-			BrandID: p.BrandID,
-		}
-
 		b := brandMap[p.BrandID]
-		brandModel := &model.Brand{
-			ID:   b.ID,
-			Name: b.Name,
+		if b == nil {
+			b = model.EmptyBrand()
 		}
-
 		productDTO := &dto.Product{
-			Product: productModel,
-			Brand:   brandModel,
+			Product: p,
+			Brand:   b,
 		}
-
 		productDTOs = append(productDTOs, productDTO)
 	}
 
@@ -151,7 +129,7 @@ func (s *ProductServiceImpl) AddProduct(name string, brandID int64) (productID i
 		}
 	}()
 
-	product := &entity.Product{
+	product := &model.Product{
 		Name:    name,
 		BrandID: brandID,
 	}
@@ -180,7 +158,7 @@ func (s *ProductServiceImpl) EditProduct(productID int64, name string, brandID i
 		}
 	}()
 
-	product := &entity.Product{
+	product := &model.Product{
 		ID:      productID,
 		Name:    name,
 		BrandID: brandID,

@@ -6,7 +6,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
-	"github.com/haradayoshitsugucz/purple-server/domain/entity"
+	"github.com/haradayoshitsugucz/purple-server/domain/model"
 	"github.com/haradayoshitsugucz/purple-server/domain/repository"
 )
 
@@ -20,14 +20,14 @@ func NewSecretsRepository(client *secretsmanager.SecretsManager) repository.Secr
 	}
 }
 
-func (c *SecretsClient) GetDBCredentials(secretName string) (*entity.DBCredentials, error) {
+func (c *SecretsClient) GetDBCredentials(secretName string) (*model.DBCredentials, error) {
 
 	secretString, err := c.getSecretString(secretName)
 	if err != nil {
 		return nil, err
 	}
 
-	var credentials entity.DBCredentials
+	var credentials model.DBCredentials
 	err = json.Unmarshal([]byte(*secretString), &credentials)
 	if err != nil {
 		return nil, err
