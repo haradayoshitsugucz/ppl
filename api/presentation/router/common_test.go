@@ -48,7 +48,7 @@ func setUp() {
 	log.Println("before all...")
 
 	conf := env.NewConfig(config.Test)
-	logger.InitLogger(conf, "")
+	logger.InitLogger(conf, config.EmptyLog())
 
 	flag.Parse()
 

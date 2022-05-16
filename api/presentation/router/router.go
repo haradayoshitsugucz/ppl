@@ -18,9 +18,9 @@ var (
 )
 
 // Run 起動
-func Run(conf config.Config, logFileName string) error {
+func Run(conf config.Config, logArgs *config.LogArgs) error {
 
-	logger.InitLogger(conf, logFileName)
+	logger.InitLogger(conf, logArgs)
 	logger.GetLogger().Info(fmt.Sprintf("Purple API is Running at %v Port ...", conf.AppSetting().Port))
 	logger.GetLogger().Info(conf.Description())
 
