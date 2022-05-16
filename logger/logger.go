@@ -42,7 +42,7 @@ func InitLogger(conf config.Config, fileName string) {
 	if len(fileName) > 0 && util.Exists(fileName) {
 		filePath = fileName
 	} else {
-		panic("not exists log file")
+		panic(fmt.Sprintf("not exists log file:%s", fileName))
 	}
 
 	l, err := newZapConfig(
