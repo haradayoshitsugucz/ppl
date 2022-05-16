@@ -3,10 +3,10 @@ package logger
 import (
 	"fmt"
 	"net/url"
-	"path/filepath"
 	"time"
 
 	"github.com/haradayoshitsugucz/purple-server/config"
+	"github.com/haradayoshitsugucz/purple-server/util"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
@@ -21,9 +21,6 @@ const (
 	consoleEncoding string = "console"
 
 	defaultEncoding = consoleEncoding
-
-	// ログファイルの拡張子
-	logExt = ".log"
 )
 
 func parseEncodingType(in string) string {
@@ -39,18 +36,13 @@ func parseEncodingType(in string) string {
 
 func InitLogger(conf config.Config, fileName string) {
 
-	// config指定の場合
-	logFile := fmt.Sprintf("%s/%s", conf.LoggerSetting().LogDir, conf.LoggerSetting().FileName)
-	if len(fileName) > 0 {
-		// 起動引数指定の場合
-		logFile = fmt.Sprintf("%s/%s", conf.LoggerSetting().LogDir, fileName)
-	}
+	filePath := fmt.Sprintf("%s/%s", conf.LoggerSetting().LogDir, conf.LoggerSetting().FileName)
 
-	// 拡張子が.logの場合はファイル出力をし、それ以外はコンソール出力となる
-	ext := filepath.Ext(logFile)
-	var filePath string
-	if ext == logExt {
-		filePath = logFile
+	// 起動引数で指定したログファイル名の存在チェック
+	if len(fileName) > 0 && util.Exists(fileName) {
+		filePath = fileName
+	} else {
+		panic("not exists log file")
 	}
 
 	l, err := newZapConfig(
@@ -86,7 +78,7 @@ func newZapConfig(setting *config.LoggerSetting, filePath string) zap.Config {
 	}
 
 	if len(filePath) > 0 {
-		if setting.Rotate != nil {
+		if setting.Rotate.MaxSize > 0 {
 			c.OutputPaths = []string{"stdout", fmt.Sprintf("lumberjack:%s", filePath)}
 			c.OutputPaths = []string{"stderr", fmt.Sprintf("lumberjack:%s", filePath)}
 
