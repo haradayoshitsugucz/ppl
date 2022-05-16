@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -14,6 +13,7 @@ import (
 	"github.com/haradayoshitsugucz/purple-server/constant"
 	"github.com/haradayoshitsugucz/purple-server/infra/dao"
 	"github.com/haradayoshitsugucz/purple-server/logger"
+	"go.uber.org/zap"
 )
 
 type ProductController interface {
@@ -114,7 +114,7 @@ func (c *ProductControllerImpl) AddProduct(conf config.Config) http.HandlerFunc 
 
 		productID, err := c.productService.AddProduct(param.Name, param.BrandID)
 
-		logger.GetLogger().Debug(fmt.Sprintf("AddProduct productID=%v", productID))
+		logger.GetLogger().Debug("AddProduct", zap.Int64("productID", productID))
 
 		if _, ok := err.(*dao.DuplicateError); ok {
 			response.ErrorWith(w, http.StatusConflict, constant.Err409001, err.Error())
