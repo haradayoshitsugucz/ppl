@@ -65,14 +65,13 @@ func (e *test) LoggerSetting() *config.LoggerSetting {
 	return &config.LoggerSetting{
 		Level:         zapcore.DebugLevel,
 		Encoding:      "console",
-		LogDir:        "/var/log/purple",
+		LogDir:        "log/purple/api",
 		FileName:      "application.log",
 		RequestOutput: true,
 		DBLogger: &config.DBLoggerSetting{
 			Level:                     gormLogger.Info,
 			IgnoreRecordNotFoundError: true,
 		},
-		Rotate: &config.LogRotateSetting{},
 	}
 }
 

@@ -3,7 +3,7 @@ package logger
 import (
 	"fmt"
 	"net/url"
-	"path/filepath"
+	"os"
 	"time"
 
 	"github.com/haradayoshitsugucz/purple-server/config"
@@ -21,9 +21,6 @@ const (
 	consoleEncoding string = "console"
 
 	defaultEncoding = consoleEncoding
-
-	// ログファイルの拡張子
-	logExt = ".log"
 )
 
 func parseEncodingType(in string) string {
@@ -37,20 +34,11 @@ func parseEncodingType(in string) string {
 	}
 }
 
-func InitLogger(conf config.Config, fileName string) {
+func InitLogger(conf config.Config, logArgs *config.LogArgs) {
 
-	// config指定の場合
-	logFile := fmt.Sprintf("%s/%s", conf.LoggerSetting().LogDir, conf.LoggerSetting().FileName)
-	if len(fileName) > 0 {
-		// 起動引数指定の場合
-		logFile = fmt.Sprintf("%s/%s", conf.LoggerSetting().LogDir, fileName)
-	}
-
-	// 拡張子が.logの場合はファイル出力をし、それ以外はコンソール出力となる
-	ext := filepath.Ext(logFile)
-	var filePath string
-	if ext == logExt {
-		filePath = logFile
+	filePath, err := getFilePath(conf.LoggerSetting(), logArgs)
+	if err != nil {
+		panic(err)
 	}
 
 	l, err := newZapConfig(
@@ -70,6 +58,51 @@ func GetLogger() *zap.Logger {
 	return logger
 }
 
+// 設定ファイルと起動引数のどちらも設定した場合は、起動引数の指定が優先される
+func getFilePath(setting *config.LoggerSetting, logArgs *config.LogArgs) (string, error) {
+
+	var logDir string
+	var filePath string
+
+	// 起動引数の場合
+	if ok, _ := logArgs.Empty(); !ok {
+		if logArgs.ExistsFile() {
+			if logArgs.ExistsDir() {
+				logDir = logArgs.Dir
+				filePath = fmt.Sprintf("%s/%s", logArgs.Dir, logArgs.FileName)
+			} else {
+				filePath = logArgs.FileName
+			}
+		} else {
+			return "", fmt.Errorf("[Logger][BootArg] FileName is empty")
+		}
+	} else {
+		// 設定ファイルの場合
+		if len(setting.FileName) > 0 {
+			if len(setting.LogDir) > 0 {
+				logDir = setting.LogDir
+				filePath = fmt.Sprintf("%s/%s", setting.LogDir, setting.FileName)
+			} else {
+				filePath = setting.FileName
+			}
+		} else {
+			if len(setting.LogDir) > 0 {
+				return "", fmt.Errorf("[Logger][LoggerSetting] FileName is empty")
+			}
+		}
+	}
+
+	// 事前にログディレクトリを作成する
+	if len(logDir) > 0 {
+		err := os.MkdirAll(logDir, 0777)
+		if err != nil {
+			return "", fmt.Errorf("[Logger] Failed to make dir : %s", logDir)
+		}
+	}
+
+	return filePath, nil
+}
+
 func newZapConfig(setting *config.LoggerSetting, filePath string) zap.Config {
 
 	c := zap.Config{
@@ -86,7 +119,7 @@ func newZapConfig(setting *config.LoggerSetting, filePath string) zap.Config {
 	}
 
 	if len(filePath) > 0 {
-		if setting.Rotate != nil {
+		if setting.Rotate != nil && setting.Rotate.MaxSize > 0 {
 			c.OutputPaths = []string{"stdout", fmt.Sprintf("lumberjack:%s", filePath)}
 			c.OutputPaths = []string{"stderr", fmt.Sprintf("lumberjack:%s", filePath)}
 
