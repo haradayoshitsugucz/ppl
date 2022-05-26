@@ -3,17 +3,13 @@ name: reviewdog
 on:
   pull_request:
     types: [ opened,synchronize ]
-
 jobs:
-  golangci-lint-github-pr-review:
-    name: runner / golangci-lint (github-pr-review)
+  golangci-lint:
+    name: runner / golangci-lint
     runs-on: ubuntu-latest
     steps:
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
-      - name: golangci-lint w/ github-pr-review
-        uses: reviewdog/action-golangci-lint@v1
-        with:
-          github_token: ${{ secrets.GIT_TOKEN }}
-          tool_name: "golangci-lint-github-pr-review"
-          reporter: "github-pr-review"
+        uses: actions/checkout@v3
+
+      - name: golangci-lint
+        uses: reviewdog/action-golangci-lint@v2
