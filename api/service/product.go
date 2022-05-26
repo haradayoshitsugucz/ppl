@@ -1,6 +1,8 @@
 package service
 
 import (
+	"log"
+
 	"github.com/haradayoshitsugucz/purple-server/api/domain/dto"
 	"github.com/haradayoshitsugucz/purple-server/domain/model"
 	"github.com/haradayoshitsugucz/purple-server/domain/repository"
@@ -126,6 +128,39 @@ func (s *ProductServiceImpl) AddProduct(name string, brandID int64) (productID i
 			s.transactionRepo.Rollback(tx)
 		} else {
 			s.transactionRepo.Commit(tx)
+		}
+	}()
+
+	product := &model.Product{
+		Name:    name,
+		BrandID: brandID,
+	}
+
+	productID, err = s.productRepo.Insert(product, tx)
+	if err != nil {
+		return 0, err
+	}
+
+	return productID, nil
+}
+
+func (s *ProductServiceImpl) addProduct2(name string, brandID int64) (productID int64, err error) {
+
+	// transaction
+	tx, err := s.transactionRepo.Begin()
+	if err != nil {
+		return 0, err
+	}
+
+	defer func() {
+		if err != nil {
+			if err := s.transactionRepo.Rollback(tx); err != nil {
+				log.Print(err)
+			}
+		} else {
+			if err := s.transactionRepo.Commit(tx); err != nil {
+				log.Print(err)
+			}
 		}
 	}()
 
