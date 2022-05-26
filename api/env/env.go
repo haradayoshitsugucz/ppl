@@ -31,3 +31,17 @@ func NewConfig2(env string) config.Config {
 	}
 	return conf
 }
+
+// NewConfig3 config初期化
+func NewConfig3(env string) config.Config {
+	var conf config.Config
+	switch env {
+	case config.Local:
+		conf = NewLocal()
+	case config.Test:
+		conf = NewTest()
+	default:
+		panic(fmt.Errorf("env引数が不正なため、起動に失敗しました env: %v\n", env))
+	}
+	return conf
+}
