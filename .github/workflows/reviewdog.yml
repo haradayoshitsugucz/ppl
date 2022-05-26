@@ -12,5 +12,7 @@ jobs:
         with:
           go_version: "1.16"
           level: error
+          tool_name: golangci-lint-github-pr-review
+          reporter: github-pr-review
 
 
