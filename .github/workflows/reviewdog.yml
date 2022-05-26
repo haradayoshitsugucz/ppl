@@ -10,8 +10,7 @@ jobs:
       - name: golangci-lint
         uses: reviewdog/action-golangci-lint@v2
         with:
-          golangci_lint_flags: "--disable-all -E errcheck"
-          tool_name: errcheck
-          level: info
+          go_version: "1.16"
+          level: error
 
 
